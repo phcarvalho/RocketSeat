@@ -36,7 +36,7 @@ export default class Main extends Component {
             onChange={this.handleInputChange}
           />
 
-          <SubmitButton disabled>
+          <SubmitButton>
             <FaPlus color="#FFF" size={14} />
           </SubmitButton>
         </Form>
