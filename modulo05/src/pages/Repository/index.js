@@ -1,11 +1,27 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
+import { FaArrowRight, FaArrowLeft } from 'react-icons/fa';
 
 import api from '../../services/api';
 
 import Container from '../../components/Container';
-import { Loading, Owner, IssueList } from './styles';
+import { Loading, Owner, IssueList, IssueFilter, PageChange } from './styles';
+
+const issueStates = [
+  {
+    label: 'Todas',
+    state: 'all',
+  },
+  {
+    label: 'Abertas',
+    state: 'open',
+  },
+  {
+    label: 'Fechadas',
+    state: 'closed',
+  },
+];
 
 export default class Repository extends Component {
   static propTypes = {
@@ -20,6 +36,8 @@ export default class Repository extends Component {
     repository: {},
     issues: [],
     loading: true,
+    issueState: 'open',
+    issuePage: null,
   };
 
   async componentDidMount() {
@@ -32,7 +50,6 @@ export default class Repository extends Component {
       api.get(`/repos/${repoName}/issues`, {
         params: {
           state: 'open',
-          per_page: 5,
         },
       }),
     ]);
@@ -42,6 +59,22 @@ export default class Repository extends Component {
       issues: issues.data,
       loading: false,
     });
+  }
+
+  async handleIssueStateChange(state) {
+    const { repository, issueState } = this.state;
+
+    if (state !== issueState) {
+      const { data } = await api.get(
+        `/repos/${repository.full_name}/issues?state=${state}`
+      );
+
+      this.setState({
+        issues: data,
+        issueState: state,
+        page: null,
+      });
+    }
   }
 
   render() {
@@ -59,7 +92,24 @@ export default class Repository extends Component {
           <h1>{repository.name}</h1>
           <p>{repository.description}</p>
         </Owner>
-
+        <IssueFilter>
+          {issueStates.map(issueState => (
+            <button
+              type="button"
+              onClick={() => this.handleIssueStateChange(issueState.state)}
+            >
+              {issueState.label}
+            </button>
+          ))}
+        </IssueFilter>
+        <PageChange>
+          <button type="button">
+            <FaArrowLeft color="#FFF" size={14} />
+          </button>
+          <button type="button">
+            <FaArrowRight color="#FFF" size={14} />
+          </button>
+        </PageChange>
         <IssueList>
           {issues.map(issue => (
             <li key={String(issue.id)}>
