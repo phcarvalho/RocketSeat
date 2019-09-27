@@ -110,26 +110,28 @@ export const IssueFilter = styled.div`
   margin-top: 20px;
 
   button {
-    font-size: 12px;
+    background: #ccc;
+    border: 0;
     padding: 5px;
-    width: 130px;
     border-radius: 4px;
     margin: 0 20px;
+    font-size: 12px;
+    width: 130px;
   }
 `;
 
 export const PageChange = styled.div`
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   flex-direction: row;
   margin-top: 20px;
 
   button {
-    background-color: #71951c
-    padding: 5px;
-    width: 40px;
+    background: #7159c1;
+    border: 0;
+    padding: 5px 7px;
+    margin-left: 10px;
     border-radius: 4px;
-    margin: 0 20px;
   }
 `;

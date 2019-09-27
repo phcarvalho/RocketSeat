@@ -38,6 +38,7 @@ export default class Repository extends Component {
     loading: true,
     issueState: 'open',
     issuePage: null,
+    issueLoading: false,
   };
 
   async componentDidMount() {
@@ -61,24 +62,47 @@ export default class Repository extends Component {
     });
   }
 
-  async handleIssueStateChange(state) {
-    const { repository, issueState } = this.state;
+  async handleIssueChange(state, isNextPage = false) {
+    const { repository, issueState, issuePage } = this.state;
+
+    this.setState({
+      issues: [],
+      issueLoading: true,
+    });
+
+    let page;
 
     if (state !== issueState) {
-      const { data } = await api.get(
-        `/repos/${repository.full_name}/issues?state=${state}`
-      );
-
-      this.setState({
-        issues: data,
-        issueState: state,
-        page: null,
-      });
+      page = null;
+    } else if (isNextPage) {
+      page = issuePage > 1 ? issuePage + 1 : 2;
+    } else {
+      page = issuePage <= 2 ? null : issuePage - 1;
     }
+
+    const { data } = await api.get(
+      `/repos/${repository.full_name}/issues?state=${state}${
+        page ? `&?page=${page}` : ``
+      }`
+    );
+
+    this.setState({
+      issues: data,
+      issueState: state,
+      issuePage: page,
+      issueLoading: false,
+    });
   }
 
   render() {
-    const { repository, issues, loading } = this.state;
+    const {
+      repository,
+      issues,
+      loading,
+      issuePage,
+      issueState,
+      issueLoading,
+    } = this.state;
 
     if (loading) {
       return <Loading>Carregando</Loading>;
@@ -93,38 +117,57 @@ export default class Repository extends Component {
           <p>{repository.description}</p>
         </Owner>
         <IssueFilter>
-          {issueStates.map(issueState => (
+          {issueStates.map(issueStateElement => (
             <button
               type="button"
-              onClick={() => this.handleIssueStateChange(issueState.state)}
+              onClick={() => this.handleIssueChange(issueStateElement.state)}
             >
-              {issueState.label}
+              {issueStateElement.label}
             </button>
           ))}
         </IssueFilter>
         <PageChange>
-          <button type="button">
-            <FaArrowLeft color="#FFF" size={14} />
-          </button>
-          <button type="button">
+          {issuePage ? (
+            <button
+              type="button"
+              onClick={() => this.handleIssueChange(issueState)}
+            >
+              <FaArrowLeft color="#FFF" size={14} />
+            </button>
+          ) : (
+            <div />
+          )}
+
+          <button
+            type="button"
+            onClick={() => this.handleIssueChange(issueState, true)}
+          >
             <FaArrowRight color="#FFF" size={14} />
           </button>
         </PageChange>
         <IssueList>
-          {issues.map(issue => (
-            <li key={String(issue.id)}>
-              <img src={issue.user.avatar_url} alt={issue.user.login} />
-              <div>
-                <strong>
-                  <a href={issue.html_url}>{issue.title}</a>
-                  {issue.labels.map(label => (
-                    <span key={String(label.id)}>{label.name}</span>
-                  ))}
-                </strong>
-                <p>{issue.user.login}</p>
-              </div>
-            </li>
-          ))}
+          {issueLoading ? (
+            <div className="loading-container">
+              <span>Carregando</span>
+            </div>
+          ) : (
+            <>
+              {issues.map(issue => (
+                <li key={String(issue.id)}>
+                  <img src={issue.user.avatar_url} alt={issue.user.login} />
+                  <div>
+                    <strong>
+                      <a href={issue.html_url}>{issue.title}</a>
+                      {issue.labels.map(label => (
+                        <span key={String(label.id)}>{label.name}</span>
+                      ))}
+                    </strong>
+                    <p>{issue.user.login}</p>
+                  </div>
+                </li>
+              ))}
+            </>
+          )}
         </IssueList>
       </Container>
     );
